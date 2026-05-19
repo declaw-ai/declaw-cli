@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"syscall"
 
 	"github.com/declaw-ai/declaw-cli/internal/cmdutil"
 	declaw "github.com/declaw-ai/declaw-go"
@@ -68,7 +67,7 @@ func runConnect(cmd *cobra.Command, args []string) error {
 	defer term.Restore(int(os.Stdin.Fd()), oldState)
 
 	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGWINCH)
+	notifyResize(sigCh)
 	go func() {
 		for {
 			select {
