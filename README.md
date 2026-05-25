@@ -25,7 +25,7 @@ Add `declaw mcp --` in front — now it runs in a Firecracker microVM:
   "mcpServers": {
     "github": {
       "command": "declaw",
-      "args": ["mcp", "--template", "node", "--network-allow", "api.github.com,github.com", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
+      "args": ["mcp", "--template", "node", "--network-allow", "api.github.com,github.com,codeload.github.com", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
       "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_..." }
     }
   }
@@ -98,7 +98,7 @@ Config path: `~/Library/Application Support/Claude/claude_desktop_config.json` (
   "mcpServers": {
     "github": {
       "command": "declaw",
-      "args": ["mcp", "--template", "node", "--network-allow", "api.github.com,github.com", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
+      "args": ["mcp", "--template", "node", "--network-allow", "api.github.com,github.com,codeload.github.com", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
       "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_..." }
     }
   }
@@ -114,7 +114,7 @@ Config path: `~/.cursor/mcp.json`
   "mcpServers": {
     "github": {
       "command": "declaw",
-      "args": ["mcp", "--template", "node", "--network-allow", "api.github.com,github.com", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
+      "args": ["mcp", "--template", "node", "--network-allow", "api.github.com,github.com,codeload.github.com", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
       "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_..." }
     }
   }
@@ -124,7 +124,7 @@ Config path: `~/.cursor/mcp.json`
 ### Claude Code
 
 ```bash
-claude mcp add github -- declaw mcp --template node --network-allow api.github.com,github.com -- npx -y @modelcontextprotocol/server-github
+claude mcp add github -- declaw mcp --template node --network-allow api.github.com,github.com,codeload.github.com -- npx -y @modelcontextprotocol/server-github
 ```
 
 ## Flags
