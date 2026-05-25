@@ -1,0 +1,34 @@
+project_name: declaw
+
+builds:
+  - main: ./cmd/declaw/
+    binary: declaw
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/declaw-ai/declaw-cli/internal/version.Version={{.Version}}
+      - -X github.com/declaw-ai/declaw-cli/internal/version.Commit={{.ShortCommit}}
+      - -X github.com/declaw-ai/declaw-cli/internal/version.Date={{.Date}}
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: checksums.txt
+
+release:
+  github:
+    owner: declaw-ai
+    name: declaw-cli
