@@ -29,6 +29,7 @@ func NewRootCmd() *cobra.Command {
 		volume.NewVolumeCmd(),
 		account.NewAccountCmd(),
 		newVersionCmd(),
+		newMcpCmd(),
 	)
 
 	return cmd
