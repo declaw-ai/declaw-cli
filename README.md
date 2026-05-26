@@ -139,19 +139,6 @@ claude mcp add github -- declaw mcp --template node --network-allow api.github.c
 
 Network is **deny-all by default**. MCP servers that need internet access (github, brave-search, slack, etc.) require `--network-allow`. Servers that don't (filesystem, memory, time) work without it.
 
-## How is this different?
-
-| | Declaw | nilbox | E2B |
-|---|---|---|---|
-| Isolation | Firecracker microVM (hardware) | Linux VM (unspecified) | Firecracker |
-| Install | CLI binary, one config edit | Desktop app, one-click | Python/TS SDK |
-| Requires account | Yes (API key) | No | Yes |
-| Local/offline | Not yet | Yes | No |
-| Audit logs | Yes | No | No |
-| Prompt injection defense | Opt-in via policy | No | No |
-| PII redaction | Opt-in via policy | No | No |
-| Best for | Teams needing compliance + isolation | Individual devs wanting free local sandbox | Developers building agent products |
-
 ## General Commands
 
 ```
