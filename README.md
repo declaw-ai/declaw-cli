@@ -18,25 +18,25 @@ Your existing MCP config — no sandbox:
 }
 ```
 
-Add `declaw mcp --` in front — now it runs in a Firecracker microVM:
+Add `declaw mcp` in front — now it runs in a Firecracker microVM:
 
 ```json
 {
   "mcpServers": {
     "github": {
       "command": "declaw",
-      "args": ["mcp", "--network-allow", "registry.npmjs.org,api.github.com,github.com,codeload.github.com", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
+      "args": ["mcp", "--env", "GITHUB_PERSONAL_ACCESS_TOKEN", "--network-allow", "registry.npmjs.org,api.github.com,github.com,codeload.github.com", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
       "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_..." }
     }
   }
 }
 ```
 
-One prefix. No code changes. The MCP server runs inside a hardware-isolated sandbox.
+The MCP server runs inside a hardware-isolated sandbox. Only the environment variables you explicitly forward with `--env` reach the sandbox, and network is deny-all unless you allowlist specific hosts.
 
 ## Why
 
-MCP servers run as subprocesses with full host access — no sandbox, no permission model. Claude Desktop Extensions had a [zero-click RCE](https://layerxsecurity.com/blog/claude-desktop-extensions-rce/) rated CVSS 10/10 (LayerX, Feb 2026). Cursor had [CVE-2025-54135](https://www.tenable.com/cve/CVE-2025-54135) (CurXecute, CVSS 8.6) and [CVE-2025-54136](https://www.tenable.com/cve/CVE-2025-54136) (MCPoison, CVSS 7.2). `declaw mcp` wraps any stdio MCP server in a Firecracker microVM — the server runs unchanged, it just can't touch your machine.
+MCP servers run as subprocesses with full host access — no sandbox, no permission model. Claude Desktop Extensions had a [zero-click RCE](https://layerxsecurity.com/blog/claude-desktop-extensions-rce/) rated CVSS 10/10 (LayerX, Feb 2026). Cursor had [CVE-2025-54135](https://www.tenable.com/cve/CVE-2025-54135) (CurXecute, CVSS 9.8) and [CVE-2025-54136](https://www.tenable.com/cve/CVE-2025-54136) (MCPoison, CVSS 8.8). `declaw mcp` wraps any stdio MCP server in a Firecracker microVM — the server runs unchanged, it just can't touch your machine.
 
 ## Install
 
@@ -99,7 +99,7 @@ Config path: `~/Library/Application Support/Claude/claude_desktop_config.json` (
   "mcpServers": {
     "github": {
       "command": "declaw",
-      "args": ["mcp", "--network-allow", "registry.npmjs.org,api.github.com,github.com,codeload.github.com", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
+      "args": ["mcp", "--env", "GITHUB_PERSONAL_ACCESS_TOKEN", "--network-allow", "registry.npmjs.org,api.github.com,github.com,codeload.github.com", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
       "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_..." }
     }
   }
@@ -115,17 +115,21 @@ Config path: `~/.cursor/mcp.json`
   "mcpServers": {
     "github": {
       "command": "declaw",
-      "args": ["mcp", "--network-allow", "registry.npmjs.org,api.github.com,github.com,codeload.github.com", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
+      "args": ["mcp", "--env", "GITHUB_PERSONAL_ACCESS_TOKEN", "--network-allow", "registry.npmjs.org,api.github.com,github.com,codeload.github.com", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
       "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_..." }
     }
   }
 }
 ```
 
+### Windsurf
+
+Config path: `~/.codeium/windsurf/mcp_config.json` — same JSON structure as above.
+
 ### Claude Code
 
 ```bash
-claude mcp add github -e GITHUB_PERSONAL_ACCESS_TOKEN=ghp_... -- declaw mcp --network-allow registry.npmjs.org,api.github.com,github.com,codeload.github.com -- npx -y @modelcontextprotocol/server-github
+claude mcp add github -e GITHUB_PERSONAL_ACCESS_TOKEN=ghp_... -- declaw mcp --env GITHUB_PERSONAL_ACCESS_TOKEN --network-allow registry.npmjs.org,api.github.com,github.com,codeload.github.com -- npx -y @modelcontextprotocol/server-github
 ```
 
 ## Flags
@@ -135,7 +139,7 @@ claude mcp add github -e GITHUB_PERSONAL_ACCESS_TOKEN=ghp_... -- declaw mcp --ne
 | `--network-allow <hosts>` | deny-all | Comma-separated outbound hostname allowlist |
 | `--template <name>` | `mcp-server` | Sandbox template (includes Node.js + Python) |
 | `--timeout <seconds>` | `86400` | Sandbox timeout (default 24h) |
-| `--env KEY=VAL` | — | Environment variable to forward (repeatable) |
+| `--env KEY` or `--env KEY=VAL` | — | Environment variable to forward (repeatable). `KEY` reads from host env; `KEY=VAL` sets explicitly. |
 | `--verbose` | off | Diagnostic logging to stderr |
 
 Network is **deny-all by default**. MCP servers that connect to external APIs (GitHub, Slack, Brave Search, etc.) need `--network-allow` to reach their endpoints. This is the key security property: credentials passed to the server can only reach hosts you explicitly permit.
@@ -149,11 +153,11 @@ The default `mcp-server` template includes Node.js and Python, which covers most
 echo 'FROM declaw/mcp-server:latest
 RUN apt-get update && apt-get install -y ffmpeg' > Dockerfile
 
-# Build it
-declaw template build --name my-mcp --dockerfile Dockerfile
+# Build it (returns a template ID)
+declaw template build --dockerfile Dockerfile
 
-# Use it
-declaw mcp --template my-mcp -- your-server-command
+# Use the template ID from the build output
+declaw mcp --template <template-id> -- your-server-command
 ```
 
 See `declaw template build --help` for details.

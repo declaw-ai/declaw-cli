@@ -20,14 +20,14 @@ func newMcpCmd() *cobra.Command {
 		Long: `Wrap any stdio-based MCP server in a Declaw sandbox.
 
 Add "declaw mcp --" before your existing MCP server command in your
-client config (Claude Desktop, Cursor, Claude Code, etc.) to sandbox it.
+client config (Claude Desktop, Cursor, Windsurf, Claude Code, etc.) to sandbox it.
 
 Example config:
   {
     "mcpServers": {
       "github": {
         "command": "declaw",
-        "args": ["mcp", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
+        "args": ["mcp", "--env", "GITHUB_PERSONAL_ACCESS_TOKEN", "--network-allow", "registry.npmjs.org,api.github.com,github.com,codeload.github.com", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
         "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_..." }
       }
     }
@@ -42,7 +42,7 @@ Example config:
 
 	cmd.Flags().StringP("template", "t", "mcp-server", "Sandbox template (default: mcp-server, includes Node.js + Python)")
 	cmd.Flags().Int("timeout", 86400, "Sandbox timeout in seconds (default 24h)")
-	cmd.Flags().StringSliceP("env", "e", nil, "Environment variables to forward (KEY=VAL, repeatable)")
+	cmd.Flags().StringArrayP("env", "e", nil, "Environment variables to forward (KEY or KEY=VAL, repeatable)")
 	cmd.Flags().StringSlice("network-allow", nil, "Allowed outbound hosts (comma-separated)")
 	cmd.Flags().BoolP("verbose", "v", false, "Diagnostic logging to stderr")
 
@@ -70,9 +70,9 @@ func runMcp(cmd *cobra.Command, args []string) error {
 	opts = append(opts, declaw.WithTimeout(timeout))
 
 	var envs map[string]string
-	if envPairs, _ := cmd.Flags().GetStringSlice("env"); len(envPairs) > 0 {
+	if envPairs, _ := cmd.Flags().GetStringArray("env"); len(envPairs) > 0 {
 		var err error
-		envs, err = cmdutil.ParseKeyValues(envPairs)
+		envs, err = cmdutil.ParseEnvPairs(envPairs)
 		if err != nil {
 			return err
 		}
@@ -191,7 +191,7 @@ func buildShellCommand(args []string) string {
 	}
 	quoted := make([]string, len(args))
 	for i, a := range args {
-		if strings.ContainsAny(a, " \t\n\r\"'\\$`!&|;(){}[]<>?*#~") {
+		if a == "" || strings.ContainsAny(a, " \t\n\r\"'\\$`!&|;(){}[]<>?*#~") {
 			quoted[i] = "'" + strings.ReplaceAll(a, "'", "'\"'\"'") + "'"
 		} else {
 			quoted[i] = a

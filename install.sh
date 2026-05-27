@@ -35,11 +35,12 @@ curl -fsSL "$URL" -o "$TMP/$BINARY"
 
 if [ -w "$INSTALL_DIR" ]; then
   mv "$TMP/$BINARY" "$INSTALL_DIR/$BINARY"
+  chmod +x "$INSTALL_DIR/$BINARY"
 else
   echo "Installing to $INSTALL_DIR (requires sudo)..."
   sudo mv "$TMP/$BINARY" "$INSTALL_DIR/$BINARY"
+  sudo chmod +x "$INSTALL_DIR/$BINARY"
 fi
-chmod +x "$INSTALL_DIR/$BINARY"
 
 echo ""
 echo "declaw v${VERSION} installed to $INSTALL_DIR/$BINARY"

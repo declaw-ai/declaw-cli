@@ -19,7 +19,7 @@ func newCreateCmd() *cobra.Command {
 	}
 	cmd.Flags().StringP("template", "t", "base", "Template to use")
 	cmd.Flags().Int("timeout", 300, "Sandbox timeout in seconds")
-	cmd.Flags().StringSliceP("env", "e", nil, "Environment variables (KEY=VAL)")
+	cmd.Flags().StringArrayP("env", "e", nil, "Environment variables (KEY or KEY=VAL, repeatable)")
 	cmd.Flags().StringSlice("metadata", nil, "Metadata (KEY=VAL)")
 	cmd.Flags().StringSlice("volume", nil, "Attach volumes (VOLUME_ID:MOUNT_PATH)")
 	cmd.Flags().Bool("secure", true, "Enable security pipeline")
@@ -40,8 +40,8 @@ func runCreate(cmd *cobra.Command, args []string) error {
 	timeout, _ := cmd.Flags().GetInt("timeout")
 	opts = append(opts, declaw.WithTimeout(timeout))
 
-	if envs, _ := cmd.Flags().GetStringSlice("env"); len(envs) > 0 {
-		m, err := cmdutil.ParseKeyValues(envs)
+	if envs, _ := cmd.Flags().GetStringArray("env"); len(envs) > 0 {
+		m, err := cmdutil.ParseEnvPairs(envs)
 		if err != nil {
 			return err
 		}
