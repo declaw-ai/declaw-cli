@@ -6,7 +6,6 @@ BINARY="declaw"
 INSTALL_DIR="/usr/local/bin"
 
 command -v curl >/dev/null || { echo "Error: curl is required but not installed."; exit 1; }
-command -v tar >/dev/null || { echo "Error: tar is required but not installed."; exit 1; }
 
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 case "$OS" in
@@ -26,14 +25,13 @@ if [ -z "$VERSION" ]; then
   exit 1
 fi
 
-URL="https://github.com/$REPO/releases/download/v${VERSION}/${BINARY}-${OS}-${ARCH}.tar.gz"
+URL="https://github.com/$REPO/releases/download/v${VERSION}/${BINARY}-${OS}-${ARCH}"
 echo "Downloading declaw v${VERSION} for ${OS}/${ARCH}..."
 
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
-curl -fsSL "$URL" -o "$TMP/declaw.tar.gz"
-tar -xzf "$TMP/declaw.tar.gz" -C "$TMP"
+curl -fsSL "$URL" -o "$TMP/$BINARY"
 
 if [ -w "$INSTALL_DIR" ]; then
   mv "$TMP/$BINARY" "$INSTALL_DIR/$BINARY"
