@@ -2,6 +2,7 @@ package cmdutil
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/declaw-ai/declaw-cli/internal/config"
@@ -80,7 +81,30 @@ func ParseKeyValues(pairs []string) (map[string]string, error) {
 		if !ok {
 			return nil, fmt.Errorf("invalid KEY=VALUE format: %q", p)
 		}
+		if k == "" {
+			return nil, fmt.Errorf("invalid KEY=VALUE format: %q: key cannot be empty", p)
+		}
 		m[k] = v
+	}
+	return m, nil
+}
+
+func ParseEnvPairs(pairs []string) (map[string]string, error) {
+	m := make(map[string]string, len(pairs))
+	for _, p := range pairs {
+		k, v, ok := strings.Cut(p, "=")
+		if ok {
+			if k == "" {
+				return nil, fmt.Errorf("invalid env var: %q: key cannot be empty", p)
+			}
+			m[k] = v
+			continue
+		}
+		v, found := os.LookupEnv(p)
+		if !found {
+			return nil, fmt.Errorf("environment variable %q not set", p)
+		}
+		m[p] = v
 	}
 	return m, nil
 }

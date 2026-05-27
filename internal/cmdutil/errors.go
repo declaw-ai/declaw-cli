@@ -27,7 +27,7 @@ func HandleError(err error) {
 
 	var balance *declaw.InsufficientBalanceError
 	if errors.As(err, &balance) {
-		fmt.Fprintln(os.Stderr, "Error: Insufficient balance. Visit https://app.declaw.ai to add funds.")
+		fmt.Fprintln(os.Stderr, "Error: Insufficient balance. Visit https://console.declaw.ai to add funds.")
 		os.Exit(1)
 	}
 
