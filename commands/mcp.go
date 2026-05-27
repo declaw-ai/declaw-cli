@@ -40,7 +40,7 @@ Example config:
 	cmd.SetOut(os.Stderr)
 	cmd.SetErr(os.Stderr)
 
-	cmd.Flags().StringP("template", "t", "base", "Sandbox template")
+	cmd.Flags().StringP("template", "t", "mcp-server", "Sandbox template (default: mcp-server, includes Node.js + Python)")
 	cmd.Flags().Int("timeout", 86400, "Sandbox timeout in seconds (default 24h)")
 	cmd.Flags().StringSliceP("env", "e", nil, "Environment variables to forward (KEY=VAL, repeatable)")
 	cmd.Flags().StringSlice("network-allow", nil, "Allowed outbound hosts (comma-separated)")
