@@ -26,6 +26,8 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	key, _ := cmd.Flags().GetString("api-key")
 
 	if key == "" {
+		fmt.Fprintln(os.Stderr, "Don't have an API key? Sign up at https://console.declaw.ai")
+		fmt.Fprintln(os.Stderr)
 		fmt.Fprint(os.Stderr, "Enter your Declaw API key: ")
 		raw, err := term.ReadPassword(int(os.Stdin.Fd()))
 		fmt.Fprintln(os.Stderr)
