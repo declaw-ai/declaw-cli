@@ -42,22 +42,22 @@ MCP servers run as subprocesses with full host access — no sandbox, no permiss
 
 **Option 1 — Download binary**
 
-Grab the latest from [Releases](https://github.com/declaw-ai/declaw-cli/releases). Pick the right archive for your platform:
+Grab the latest from [Releases](https://github.com/declaw-ai/declaw-cli/releases). Pick the right binary for your platform:
 
-| Platform | Archive |
-|----------|---------|
-| macOS Apple Silicon | `declaw-darwin-arm64.tar.gz` |
-| macOS Intel | `declaw-darwin-amd64.tar.gz` |
-| Linux x86_64 | `declaw-linux-amd64.tar.gz` |
-| Linux ARM64 | `declaw-linux-arm64.tar.gz` |
-| Windows x86_64 | `declaw-windows-amd64.zip` |
-| Windows ARM64 | `declaw-windows-arm64.zip` |
+| Platform | Binary |
+|----------|--------|
+| macOS Apple Silicon | `declaw-darwin-arm64` |
+| macOS Intel | `declaw-darwin-amd64` |
+| Linux x86_64 | `declaw-linux-amd64` |
+| Linux ARM64 | `declaw-linux-arm64` |
+| Windows x86_64 | `declaw-windows-amd64.exe` |
+| Windows ARM64 | `declaw-windows-arm64.exe` |
 
-Extract and move to your PATH:
+Download and move to your PATH:
 
 ```bash
-tar -xzf declaw-darwin-arm64.tar.gz   # or unzip on Windows
-sudo mv declaw /usr/local/bin/
+chmod +x declaw-darwin-arm64
+sudo mv declaw-darwin-arm64 /usr/local/bin/declaw
 ```
 
 **Option 2 — Shell script**
@@ -132,12 +132,30 @@ claude mcp add github -- declaw mcp --template node --network-allow api.github.c
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--network-allow <hosts>` | deny-all | Comma-separated outbound hostname allowlist |
-| `--template <name>` | `base` | Sandbox template |
+| `--template <name>` | `mcp-server` | Sandbox template (includes Node.js + Python) |
 | `--timeout <seconds>` | `86400` | Sandbox timeout (default 24h) |
 | `--env KEY=VAL` | — | Environment variable to forward (repeatable) |
 | `--verbose` | off | Diagnostic logging to stderr |
 
 Network is **deny-all by default**. MCP servers that need internet access (github, brave-search, slack, etc.) require `--network-allow`. Servers that don't (filesystem, memory, time) work without it.
+
+## Custom dependencies
+
+The default `mcp-server` template includes Node.js and Python, which covers most MCP servers. If your server needs additional system packages (e.g., `ffmpeg`, `chromium`, native libraries), build a custom template:
+
+```bash
+# Create a Dockerfile
+echo 'FROM declaw/mcp-server:latest
+RUN apt-get update && apt-get install -y ffmpeg' > Dockerfile
+
+# Build it
+declaw template build --name my-mcp --dockerfile Dockerfile
+
+# Use it
+declaw mcp --template my-mcp -- your-server-command
+```
+
+See `declaw template build --help` for details.
 
 ## General Commands
 
