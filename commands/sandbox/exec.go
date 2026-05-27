@@ -26,7 +26,7 @@ func newExecCmd() *cobra.Command {
 	cmd.Flags().String("cwd", "", "Working directory inside the sandbox")
 	cmd.Flags().String("user", "", "User to run the command as")
 	cmd.Flags().Int("timeout", 60, "Command timeout in seconds")
-	cmd.Flags().StringSliceP("env", "e", nil, "Environment variables (KEY=VAL)")
+	cmd.Flags().StringArrayP("env", "e", nil, "Environment variables (KEY or KEY=VAL, repeatable)")
 	return cmd
 }
 
@@ -61,8 +61,8 @@ func runExec(cmd *cobra.Command, args []string) error {
 	if timeout, _ := cmd.Flags().GetInt("timeout"); timeout > 0 {
 		runOpts = append(runOpts, declaw.WithRunTimeout(time.Duration(timeout)*time.Second))
 	}
-	if envs, _ := cmd.Flags().GetStringSlice("env"); len(envs) > 0 {
-		m, err := cmdutil.ParseKeyValues(envs)
+	if envs, _ := cmd.Flags().GetStringArray("env"); len(envs) > 0 {
+		m, err := cmdutil.ParseEnvPairs(envs)
 		if err != nil {
 			return err
 		}
