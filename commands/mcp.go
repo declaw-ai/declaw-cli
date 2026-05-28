@@ -41,8 +41,9 @@ Example config:
 	cmd.SetErr(os.Stderr)
 
 	cmd.Flags().StringP("template", "t", "mcp-server", "Sandbox template (default: mcp-server, includes Node.js + Python)")
-	cmd.Flags().Int("timeout", 86400, "Sandbox timeout in seconds (default 24h)")
+	cmd.Flags().Int("timeout", 3600, "Sandbox timeout in seconds (default 1h)")
 	cmd.Flags().StringArrayP("env", "e", nil, "Environment variables to forward (KEY or KEY=VAL, repeatable)")
+	cmd.Flags().StringArrayP("file", "f", nil, "Upload local file to sandbox (LOCAL_PATH:REMOTE_PATH, repeatable)")
 	cmd.Flags().StringSlice("network-allow", nil, "Allowed outbound hosts (comma-separated)")
 	cmd.Flags().BoolP("verbose", "v", false, "Diagnostic logging to stderr")
 
@@ -115,6 +116,46 @@ func runMcp(cmd *cobra.Command, args []string) error {
 	}
 	defer killSandbox()
 	logf("sandbox ready: %s", sbx.ID)
+
+	if fileMappings, _ := cmd.Flags().GetStringArray("file"); len(fileMappings) > 0 {
+		for _, mapping := range fileMappings {
+			parts := strings.SplitN(mapping, ":", 2)
+			if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+				fmt.Fprintf(os.Stderr, "[declaw] invalid file mapping: %s (use LOCAL_PATH:REMOTE_PATH)\n", mapping)
+				killSandbox()
+				os.Exit(125)
+			}
+			src, dest := parts[0], parts[1]
+			info, err := os.Stat(src)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "[declaw] failed to read %s: %v\n", src, err)
+				killSandbox()
+				os.Exit(125)
+			}
+			if info.IsDir() {
+				fmt.Fprintf(os.Stderr, "[declaw] %s is a directory, not a file\n", src)
+				killSandbox()
+				os.Exit(125)
+			}
+			if info.Size() > 100*1024*1024 {
+				fmt.Fprintf(os.Stderr, "[declaw] file too large: %s (%d MB, max 100 MB)\n", src, info.Size()/1024/1024)
+				killSandbox()
+				os.Exit(125)
+			}
+			data, err := os.ReadFile(src)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "[declaw] failed to read %s: %v\n", src, err)
+				killSandbox()
+				os.Exit(125)
+			}
+			if _, err := sbx.Files.WriteBytes(ctx, dest, data); err != nil {
+				fmt.Fprintf(os.Stderr, "[declaw] failed to upload %s to %s: %v\n", src, dest, err)
+				killSandbox()
+				os.Exit(125)
+			}
+			logf("uploaded %s → %s", src, dest)
+		}
+	}
 
 	fullCmd := buildShellCommand(args)
 	logf("starting: %s", fullCmd)
