@@ -138,8 +138,9 @@ claude mcp add github -e GITHUB_PERSONAL_ACCESS_TOKEN=ghp_... -- declaw mcp --en
 |------|---------|-------------|
 | `--network-allow <hosts>` | deny-all | Comma-separated outbound hostname allowlist |
 | `--template <name>` | `mcp-server` | Sandbox template (includes Node.js + Python) |
-| `--timeout <seconds>` | `86400` | Sandbox timeout (default 24h) |
+| `--timeout <seconds>` | `3600` | Sandbox timeout (default 1h) |
 | `--env KEY` or `--env KEY=VAL` | — | Environment variable to forward (repeatable). `KEY` reads from host env; `KEY=VAL` sets explicitly. |
+| `--file LOCAL:REMOTE` | — | Upload a local file into the sandbox before starting (repeatable) |
 | `--verbose` | off | Diagnostic logging to stderr |
 
 Network is **deny-all by default**. MCP servers that connect to external APIs (GitHub, Slack, Brave Search, etc.) need `--network-allow` to reach their endpoints. This is the key security property: credentials passed to the server can only reach hosts you explicitly permit.
