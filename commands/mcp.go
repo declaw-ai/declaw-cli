@@ -161,7 +161,9 @@ func runMcp(cmd *cobra.Command, args []string) error {
 				}
 			}
 			if readErr != nil {
+				logf("stdin closed, terminating sandbox")
 				handle.CloseStdin(context.Background())
+				cancel()
 				break
 			}
 		}
