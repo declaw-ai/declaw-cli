@@ -1,8 +1,9 @@
 package commands
 
 import (
-	"github.com/declaw-ai/declaw-cli/commands/auth"
 	"github.com/declaw-ai/declaw-cli/commands/account"
+	"github.com/declaw-ai/declaw-cli/commands/auth"
+	"github.com/declaw-ai/declaw-cli/commands/governance"
 	"github.com/declaw-ai/declaw-cli/commands/sandbox"
 	"github.com/declaw-ai/declaw-cli/commands/template"
 	"github.com/declaw-ai/declaw-cli/commands/volume"
@@ -28,6 +29,7 @@ func NewRootCmd() *cobra.Command {
 		template.NewTemplateCmd(),
 		volume.NewVolumeCmd(),
 		account.NewAccountCmd(),
+		governance.NewGovernanceCmd(),
 		newVersionCmd(),
 		newMcpCmd(),
 	)

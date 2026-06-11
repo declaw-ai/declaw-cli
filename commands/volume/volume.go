@@ -13,6 +13,11 @@ func NewVolumeCmd() *cobra.Command {
 		newListCmd(),
 		newGetCmd(),
 		newDeleteCmd(),
+		newSnapshotCmd(),
+		newEmptyCmd(),
+		newIngestCmd(),
+		newFilesCmd(),
+		newLockCmd(),
 	)
 	return cmd
 }
