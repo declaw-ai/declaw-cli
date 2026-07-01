@@ -63,6 +63,20 @@ func AccountOpts(cfg *config.Resolved) []declaw.ConfigOption {
 	return opts
 }
 
+func VaultOpts(cfg *config.Resolved) []declaw.ConfigOption {
+	var opts []declaw.ConfigOption
+	if cfg.APIKey != "" {
+		opts = append(opts, declaw.WithAPIKey(cfg.APIKey))
+	}
+	if cfg.APIURL != "" {
+		opts = append(opts, declaw.WithAPIURL(cfg.APIURL))
+	}
+	if cfg.Domain != "" {
+		opts = append(opts, declaw.WithDomain(cfg.Domain))
+	}
+	return opts
+}
+
 func RestoreOpts(cfg *config.Resolved) []declaw.RestoreOption {
 	var opts []declaw.RestoreOption
 	if cfg.APIKey != "" {

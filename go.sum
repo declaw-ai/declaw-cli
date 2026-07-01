@@ -3,6 +3,8 @@ github.com/declaw-ai/declaw-go v0.3.1 h1:5O+Sy8VmnY/ZNc2+RZxcLBEuoBSnfZEY4dH7CJu
 github.com/declaw-ai/declaw-go v0.3.1/go.mod h1:syJsP4qtqrdAjOUv1HCnjV8Q2wWMpWdYrxt1LMCTGA0=
 github.com/declaw-ai/declaw-go v0.4.0 h1:VRBSdJilmxvG5/85kOcIymomf2wEYrXsrb3XOMo/dfc=
 github.com/declaw-ai/declaw-go v0.4.0/go.mod h1:syJsP4qtqrdAjOUv1HCnjV8Q2wWMpWdYrxt1LMCTGA0=
+github.com/declaw-ai/declaw-go v0.5.0 h1:jOIZbEhekjildArtpHSd07fgKBHwS50Iabw4LKAUiio=
+github.com/declaw-ai/declaw-go v0.5.0/go.mod h1:syJsP4qtqrdAjOUv1HCnjV8Q2wWMpWdYrxt1LMCTGA0=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=

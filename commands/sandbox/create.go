@@ -21,6 +21,7 @@ func newCreateCmd() *cobra.Command {
 	cmd.Flags().StringP("template", "t", "base", "Template to use")
 	cmd.Flags().Int("timeout", 300, "Sandbox timeout in seconds")
 	cmd.Flags().StringArrayP("env", "e", nil, "Environment variables (KEY or KEY=VAL, repeatable)")
+	cmd.Flags().StringArray("vault-ref", nil, "Vault-backed env var (ENV_VAR=secret-name, repeatable). The VM receives a placeholder; the real secret is injected at the egress proxy and never enters the sandbox.")
 	cmd.Flags().StringSlice("metadata", nil, "Metadata (KEY=VAL)")
 	cmd.Flags().StringSlice("volume", nil, "Attach volumes (VOLUME_ID:MOUNT_PATH[:MODE[:SUBPATH]]); MODE is copy|mount|mount-ro, SUBPATH valid only for live mounts)")
 	cmd.Flags().Bool("secure", true, "Enable security pipeline")
@@ -29,6 +30,11 @@ func newCreateCmd() *cobra.Command {
 	cmd.Flags().Bool("opa-fail-closed", false, "When set, deny the action if the OPA evaluator is unreachable (fail-closed); default is fail-open")
 	cmd.Flags().String("opa-policy-ref", "", "Reference to a pre-published policy bundle (forms: name@version, sha256:<hex>, blob:<key>). Sets custom_policy.policy_ref and enables the custom policy. Composes with --opa-policy / --opa-policy-module when both are provided.")
 	cmd.Flags().StringSlice("content-gate-domains", nil, "Enable the content gate and restrict interception to these hosts (comma-separated, e.g. openai.com,api.anthropic.com). Implies content_gate.enabled=true.")
+	cmd.Flags().Bool("injection-full", false, "Enable the FULL prompt-injection cascade in one flag: Tier-1 ML classifier + Layer-A static signatures + posture + Tier-2 Gemma LLM judge (multi-turn/indirect) + the OPA prompt-injection pack")
+	cmd.Flags().String("injection-mode", "balanced", "Posture for --injection-full: strict|balanced|permissive|agentic-tool|data-egress-sensitive")
+	cmd.Flags().String("injection-policy", "", "Natural-language description of what the agent may do (the Tier-2 judge uses it to tell task-aligned egress from injection); used with --injection-full")
+	cmd.Flags().Bool("injection-always-judge", false, "Run the Tier-2 judge on every egress (high-assurance, costlier); used with --injection-full")
+	cmd.Flags().StringArray("injection-domain", nil, "Restrict injection scanning to these destination hosts (repeatable, e.g. api.openai.com). Required for injection scanning to run: with no hosts listed, no injection scanning happens. Hosts support exact matches, \"*.suffix.com\" wildcards, and \"~regex\" patterns.")
 	return cmd
 }
 
@@ -54,6 +60,16 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		opts = append(opts, declaw.WithEnvs(m))
 	}
 
+	// --vault-ref ENV_VAR=vault://team/env/secret: the VM env carries only a
+	// placeholder; the real value is resolved + injected at the egress proxy.
+	if refs, _ := cmd.Flags().GetStringArray("vault-ref"); len(refs) > 0 {
+		m, err := cmdutil.ParseKeyValues(refs)
+		if err != nil {
+			return fmt.Errorf("invalid --vault-ref (want ENV_VAR=secret-name): %w", err)
+		}
+		opts = append(opts, declaw.WithVaultRefs(m))
+	}
+
 	if meta, _ := cmd.Flags().GetStringSlice("metadata"); len(meta) > 0 {
 		m, err := cmdutil.ParseKeyValues(meta)
 		if err != nil {
@@ -75,18 +91,57 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		opts = append(opts, declaw.WithSecure(secure))
 	}
 
-	// OPA / custom-policy flags: --opa-policy, --opa-policy-module, --opa-fail-closed, --opa-policy-ref
-	//
-	// All four flags contribute to the same CustomPolicyConfig. When more than
-	// one is supplied they compose: e.g. --opa-policy-ref can be combined with
-	// --opa-fail-closed, and --opa-policy / --opa-policy-module can accompany a
-	// ref (the platform evaluates both the inline modules and the bundle).
+	// Policy-shaping flags accumulate into ONE SecurityPolicy, applied with a
+	// single WithSecurity at the end — so --injection-full, the OPA custom-policy
+	// flags, and --content-gate-domains compose instead of overwriting each other.
+	var sp declaw.SecurityPolicy
+	secTouched := false
+
+	// --injection-full: the entire prompt-injection cascade in one flag —
+	// Tier-1 ML classifier + Layer-A static signatures + posture + the Tier-2
+	// Gemma judge (multi-turn/indirect) + the OPA prompt-injection governance pack.
+	if full, _ := cmd.Flags().GetBool("injection-full"); full {
+		mode, _ := cmd.Flags().GetString("injection-mode")
+		agentPolicy, _ := cmd.Flags().GetString("injection-policy")
+		always, _ := cmd.Flags().GetBool("injection-always-judge")
+		fp := declaw.FullInjectionDefensePolicy(declaw.FullInjectionDefenseOptions{
+			Mode:        mode,
+			AgentPolicy: agentPolicy,
+			AlwaysJudge: always,
+		})
+		sp.InjectionDefense = fp.InjectionDefense
+		sp.CustomPolicy = fp.CustomPolicy
+		secTouched = true
+	}
+
+	// --injection-domain: scope injection scanning to specific destination hosts.
+	// Injection is opt-in per host — with no hosts listed no scanning runs — so a
+	// bare --injection-domain (without --injection-full) still enables injection
+	// defense, just confined to the named hosts. When --injection-full is also
+	// present these hosts attach to the cascade it built above.
+	if cmd.Flags().Changed("injection-domain") {
+		domains, _ := cmd.Flags().GetStringArray("injection-domain")
+		if sp.InjectionDefense == nil {
+			sp.InjectionDefense = &declaw.InjectionDefenseConfig{Enabled: true}
+		}
+		sp.InjectionDefense.Domains = domains
+		secTouched = true
+	}
+
+	// OPA / custom-policy flags: --opa-policy, --opa-policy-module,
+	// --opa-fail-closed, --opa-policy-ref. All contribute to the same
+	// CustomPolicyConfig and compose with each other (and with --injection-full,
+	// whose pack ref an explicit --opa-policy-ref overrides).
 	opaChanged := cmd.Flags().Changed("opa-policy") ||
 		cmd.Flags().Changed("opa-policy-module") ||
 		cmd.Flags().Changed("opa-fail-closed") ||
 		cmd.Flags().Changed("opa-policy-ref")
 	if opaChanged {
-		cp := &declaw.CustomPolicyConfig{Enabled: true}
+		cp := sp.CustomPolicy
+		if cp == nil {
+			cp = &declaw.CustomPolicyConfig{}
+		}
+		cp.Enabled = true
 
 		if cmd.Flags().Changed("opa-fail-closed") {
 			failClosed, _ := cmd.Flags().GetBool("opa-fail-closed")
@@ -117,24 +172,22 @@ func runCreate(cmd *cobra.Command, args []string) error {
 			cp.PolicyRef = ref
 		}
 
-		// Compose with any SecurityPolicy already built by previous options.
-		// Look for an existing WithSecurity in opts by re-resolving; if none
-		// was set we build a fresh SecurityPolicy with only CustomPolicy.
-		sp := declaw.SecurityPolicy{CustomPolicy: cp}
-		opts = append(opts, declaw.WithSecurity(sp))
+		sp.CustomPolicy = cp
+		secTouched = true
 	}
 
 	// --content-gate-domains: enable the content gate and (optionally) restrict
-	// it to specific hosts. Composes with the OPA custom-policy block above —
-	// both may be present in the same SecurityPolicy without conflict.
+	// it to specific hosts.
 	if cmd.Flags().Changed("content-gate-domains") {
 		domains, _ := cmd.Flags().GetStringSlice("content-gate-domains")
-		sp := declaw.SecurityPolicy{
-			ContentGate: &declaw.ContentGateConfig{
-				Enabled: true,
-				Domains: domains,
-			},
+		sp.ContentGate = &declaw.ContentGateConfig{
+			Enabled: true,
+			Domains: domains,
 		}
+		secTouched = true
+	}
+
+	if secTouched {
 		opts = append(opts, declaw.WithSecurity(sp))
 	}
 
