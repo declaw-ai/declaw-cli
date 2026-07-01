@@ -54,7 +54,7 @@ tag is the release button.
 
    ```bash
    gh workflow run sync-mirror.yml -f component=cli \
-     -f message="release: vX.Y.Z" && gh run watch
+     -f message="release(cli): vX.Y.Z" && gh run watch
    ```
 
 6. **Tag the mirror — this builds + releases**
@@ -66,10 +66,17 @@ tag is the release button.
    ```
 
    Watch the run (`gh run list --repo declaw-ai/declaw-cli -w publish.yml`).
-   It attaches: darwin-arm64, darwin-amd64, linux-amd64, linux-arm64,
-   windows-amd64.exe, windows-arm64.exe (the README install table depends
-   on these exact names). If it fails, nothing was released — fix and
-   `gh run rerun` (the tag stays).
+   It attaches: checksums.txt, darwin-arm64, darwin-amd64, linux-amd64,
+   linux-arm64, windows-amd64.exe, windows-arm64.exe (the README install
+   table and install.sh depend on these exact names).
+
+   **If the run fails** (no release is created on failure):
+   - *Transient* (runner/network): `gh run rerun` — the tag stays.
+   - *The fix changes repo content* (workflow, tests, build): fix in the
+     monorepo → push → re-sync → **delete + re-create the tag** on the new
+     snapshot. A rerun is useless here — tag-push workflows execute from
+     the tagged commit, so the tag must move to the fixed snapshot.
+   - *A release with assets exists*: never move the tag — ship a patch.
 
 7. **Wrap up**: update the docs capability matrix (`client_docs`) if this
    is part of a release train.

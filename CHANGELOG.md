@@ -5,6 +5,19 @@ All notable changes to the Declaw CLI are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.6.0] — 2026-07
+
+_2026-07 train: credential vault client + injection domain scoping._
+
+### Added
+
+- `declaw vault` — manage credential-vault secrets by name: `create`, `list`,
+  `rotate`, `update-scopes`, `delete`, and `presets`. Secret values are
+  write-only. Reference a secret from a sandbox so its value is injected at the
+  egress proxy and never enters the sandbox (#386, #399, #408, #456).
+- `--injection-domain` — opt-in scoping of injection scanning to specific
+  destination hosts.
+
 ## [v0.5.0] — 2026-06
 
 _2026-06 train: file-granular volumes, OPA governance._
