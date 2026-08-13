@@ -5,6 +5,16 @@ All notable changes to the Declaw CLI are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.7.0] — 2026-08
+
+_2026-08 train: idempotent sandbox creation._
+
+### Changed
+
+- `declaw sandbox create` inherits idempotent creation from the Go SDK: an
+  interrupted or retried create no longer risks leaving a second running,
+  billable sandbox behind.
+
 ## [v0.6.0] — 2026-07
 
 _2026-07 train: credential vault client + injection domain scoping._
