@@ -5,6 +5,29 @@ All notable changes to the Declaw CLI are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.8.0] — 2026-09
+
+_2026-09 train: working template builds._
+
+### Changed
+
+- `--run-cmd` takes its value verbatim, one command per flag. Commas no longer
+  split a command, so `--run-cmd 'pip install "numpy>=1.24,<2"'` works.
+- `declaw template build` prints the build ID first, then streams the build
+  output to stderr while it waits, so stdout stays clean for `--json`. Ctrl-C
+  stops waiting and exits 130 while the build keeps running; a failed build
+  exits 1 after its output. Status checks that fail temporarily are retried
+  for up to two minutes (from go-sdk v0.7.0).
+
+### Fixed
+
+- `declaw template build` always failed with `alias is required`. The new
+  required `--alias` flag names the template; create sandboxes from it with
+  `declaw sandbox create --template <alias>` or
+  `declaw mcp --template <alias>`.
+- Packages given with `--apt-package` are now installed; they were sent under
+  a name the API ignores.
+
 ## [v0.7.0] — 2026-08
 
 _2026-08 train: idempotent sandbox creation._
