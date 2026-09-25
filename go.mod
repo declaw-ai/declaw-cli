@@ -3,7 +3,7 @@ module github.com/declaw-ai/declaw-cli
 go 1.25.0
 
 require (
-	github.com/declaw-ai/declaw-go v0.7.0
+	github.com/declaw-ai/declaw-go v0.8.0
 	github.com/spf13/cobra v1.8.1
 	golang.org/x/term v0.43.0
 )

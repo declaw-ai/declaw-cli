@@ -11,6 +11,7 @@ func NewTemplateCmd() *cobra.Command {
 	cmd.AddCommand(
 		newListCmd(),
 		newBuildCmd(),
+		newRebuildCmd(),
 		newInfoCmd(),
 		newDeleteCmd(),
 	)

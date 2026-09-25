@@ -5,6 +5,16 @@ All notable changes to the Declaw CLI are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.9.0] — 2026-09
+
+_2026-09b train: template rebuild._
+
+### Added
+
+- `declaw template rebuild <template-id>`: retry a failed template build,
+  streaming its output like `template build`; `--no-wait` returns once the
+  build has started. Previously the only retry was delete-and-build. (#919)
+
 ## [v0.8.0] — 2026-09
 
 _2026-09 train: working template builds._
